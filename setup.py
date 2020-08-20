@@ -9,7 +9,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='rshelly',  
-    version='0.1',
+    version='0.2',
     scripts=['rshelly', ],
     author='Sotirios Roussis a.k.a. xtonousou',
     author_email='sroussis@xtonousou.xyz',
@@ -27,8 +27,4 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    entry_points='''
-        [console_scripts]
-        rshelly=rshelly.rshelly:main
-    ''',
 )
