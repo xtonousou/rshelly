@@ -9,7 +9,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='rshelly',  
-    version='0.3',
+    version='0.4',
     scripts=['rshelly', ],
     author='Sotirios Roussis a.k.a. xtonousou',
     author_email='sroussis@xtonousou.xyz',
