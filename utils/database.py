@@ -1,6 +1,10 @@
 class Shell(object):
 
     def __init__(self: object) -> None:
+        self.listener: dict = {
+            'tcp': 'rlwrap nc -lvvnp {lport}',
+            'udp': 'rlwrap nc -u -lvvnp {lport}',
+        }
         self.database: dict = {
             'linux': {
                 'tcp': {

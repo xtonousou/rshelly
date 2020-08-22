@@ -5,6 +5,7 @@ Generate reverse shell payloads
 """
 
 import click
+import sys
 from os import popen
 from json import dumps
 from utils.database import Shell
@@ -35,35 +36,42 @@ def list_cmds(database):
 @click.option('--lport', default=1337, help='Port to use. Default: 1337')
 @click.option('--list-all', is_flag=True)
 def main(os, proto, cmd, lhost, lport, list_all):
-    db = getattr(Shell(), 'database')
+    shell = Shell()
+    db = getattr(shell, 'database')
 
     if list_all is True:
         list_cmds(db)
-        return None
+        return 1
 
     keys = db.keys()
     if os not in keys:
         click.secho(f'The option "os" is invalid. Supported operating systems: {keys}', bold=True, err=True)
+        return 2
 
     keys = db[os].keys()
     if proto not in keys:
         click.secho(f'The option "proto" is invalid. Supported protocols: {keys}', bold=True, err=True)
+        return 3
 
     keys = db[os][proto].keys()
     if cmd not in keys:
         click.secho(f'The option "cmd" is invalid. Supported commands/tools for target: {keys}', bold=True, err=True)
+        return 4
 
     del keys
 
     if lhost == 'default':
         lhost = popen("ip a|grep -Ei 'enp.*:|eth.*:|wlp.*:|wlan.*:|tun.*:' -A3|grep 'inet '|tail -n1|awk '{print $2}'|awk -F'/' '{print $1}'").read().replace('\n', '')
 
+    listener = getattr(shell, 'listener')
+
     for payload in db[os][proto][cmd]:
         payload = payload.format(lhost=lhost, lport=lport)
         payload = payload.replace('LEFTBRACKET', '{').replace('RIGHTBRACKET', '}').strip()
+        click.secho(listener[proto], fg='bright_green')
         click.secho(payload, fg='bright_red')
         click.secho('---', blink=True)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
