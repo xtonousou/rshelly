@@ -68,7 +68,7 @@ def main(os, proto, cmd, lhost, lport, list_all):
     for payload in db[os][proto][cmd]:
         payload = payload.format(lhost=lhost, lport=lport)
         payload = payload.replace('LEFTBRACKET', '{').replace('RIGHTBRACKET', '}').strip()
-        click.secho(listener[proto], fg='bright_green')
+        click.secho(listener[proto].format(lport=lport), fg='bright_green')
         click.secho(payload, fg='bright_red')
         click.secho('---', blink=True)
 
