@@ -4,10 +4,12 @@
 Generate reverse shell payloads
 """
 
-import click
 import sys
-from os import popen
 from json import dumps
+from os import popen
+from urllib.parse import quote as url_encode
+
+import click
 from utils.database import Shell
 
 CONTEXT_SETTINGS = dict(token_normalize_func=lambda x: x.lower().strip())
@@ -28,6 +30,10 @@ def list_cmds(database):
     click.echo_via_pager(list_str)
 
 
+def url_encode(text):
+    return ''.join('%{0:0>2}'.format(format(ord(char), 'x')) for char in text)
+
+
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--os', default='linux', help='Target OS: "linux" or "windows". Default: linux')
 @click.option('--proto', default='tcp', help='Protocol to use: "tcp" or "udp". Default: tcp')
@@ -35,7 +41,8 @@ def list_cmds(database):
 @click.option('--lhost', default='default', help='IP address to use. Default: guessing which IP address to use')
 @click.option('--lport', default=1337, help='Port to use. Default: 1337')
 @click.option('--list-all', is_flag=True)
-def main(os, proto, cmd, lhost, lport, list_all):
+@click.option('--encode', is_flag=True)
+def main(os, proto, cmd, lhost, lport, list_all, encode):
     shell = Shell()
     db = getattr(shell, 'database')
 
@@ -69,7 +76,7 @@ def main(os, proto, cmd, lhost, lport, list_all):
         payload = payload.format(lhost=lhost, lport=lport)
         payload = payload.replace('LEFTBRACKET', '{').replace('RIGHTBRACKET', '}').strip()
         click.secho(listener[proto].format(lport=lport), fg='bright_green')
-        click.secho(payload, fg='bright_red')
+        click.secho(payload if not encode else url_encode(payload), fg='bright_red')
         click.secho('---', blink=True)
 
 
